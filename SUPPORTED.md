@@ -33,4 +33,4 @@ Para conocer los formatos y las etiquetas que MediaInfo puede reconocer, consult
 - [Formats](https://mediaarea.net/en/MediaInfo/Support/Formats)
 - [Tags](https://mediaarea.net/en/MediaInfo/Support/Tags)
 
-Estas páginas son referencias oficiales de MediaArea/MediaInfo y no constituyen una declaración independiente de soporte por parte de TwedMediaInfo.
+Estas páginas son referencias oficiales de MediaArea/MediaInfo y no constituyen una declaración independiente de soporte por parte de TwedMediaInfo...
