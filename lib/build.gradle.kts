@@ -72,9 +72,9 @@ mavenPublishing {
 
     pom {
         name = "TwedMediaInfo"
-        description = "Biblioteca Android para analizar archivos multimedia y acceder a sus metadatos e información técnica mediante MediaInfoLib."
+        description = "Librería Android que adapta MediaInfo para extraer información y metadatos de archivos multimedia."
         inceptionYear = "2026"
-        url = "https://github.com/TwedProjects/TwedMediaInfo"
+        url = "https://github.com/boludohh/TwedMediaInfo"
 
         licenses {
             license {
@@ -94,9 +94,9 @@ mavenPublishing {
         }
 
         scm {
-            url = "https://github.com/TwedProjects/TwedMediaInfo"
-            connection = "scm:git:git://github.com/TwedProjects/TwedMediaInfo.git"
-            developerConnection = "scm:git:ssh://git@github.com/TwedProjects/TwedMediaInfo.git"
+            url = "https://github.com/boludohh/TwedMediaInfo"
+            connection = "scm:git:git://github.com/boludohh/TwedMediaInfo.git"
+            developerConnection = "scm:git:ssh://git@github.com/boludohh/TwedMediaInfo.git"
         }
     }
 }
