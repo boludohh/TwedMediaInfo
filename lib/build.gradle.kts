@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 TwedMediaInfo Contributors
+ * Copyright 2026 TwedMediaInfo — boludohh
  */
 
 plugins {

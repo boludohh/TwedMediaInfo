@@ -1,4 +1,4 @@
-# Soporte y catálogos de TwedMediaInfo 0.1.0
+# Soporte y catálogos de TwedMediaInfo 1.0.0
 
 Este documento explica qué representa cada catálogo público de parámetros y dónde consultar los formatos que se pueden analizar. Para aprender a usar la API, consulta [`DOC.md`](DOC.md).
 
@@ -24,13 +24,24 @@ Si necesitas ver todos los parámetros disponibles, consulta directamente los ar
 - [Text](lib/src/main/java/com/twedmediainfo/android/parameters/Text.java)
 - [Other](lib/src/main/java/com/twedmediainfo/android/parameters/Other.java)
 
+## Entradas y estados
+
+Además del tipo de archivo, conviene saber de qué forma se puede abrir y cómo saber qué ocurrió:
+
+- **Entradas soportadas:** ruta física (`open(String)`), `File` (`open(File)`), `content://` y `file://` (`open(Uri)`).
+- **Formato no reconocido:** `open(...)` devuelve `true` aunque MediaInfo no reconozca el formato; usa `isRecognized()` para distinguirlo.
+- **Análisis posiblemente incompleto:** con fuentes que no permiten saltos de lectura, `isPartial()` devuelve `true`.
+- **Campos vacíos:** `getFieldStatus(...)` explica si el stream no existe, si el nombre del parámetro no es válido o si el campo no tiene valor.
+
+Los detalles y los ejemplos están en [`DOC.md`](DOC.md).
+
 ## Contenedores, codecs y formatos
 
-TwedMediaInfo no declara una matriz independiente de formatos soportados. El análisis depende de las capacidades de la MediaInfoLib integrada, que en esta versión es la 26.05.
+TwedMediaInfo no declara una matriz independiente de formatos soportados. El análisis depende de las capacidades de la MediaInfoLib integrada, que en la versión 1.0.0 es la 26.05.
 
 Para conocer los formatos y las etiquetas que MediaInfo puede reconocer, consulta las referencias oficiales de MediaArea:
 
 - [Formats](https://mediaarea.net/en/MediaInfo/Support/Formats)
 - [Tags](https://mediaarea.net/en/MediaInfo/Support/Tags)
 
-Estas páginas son referencias oficiales de MediaArea/MediaInfo y no constituyen una declaración independiente de soporte por parte de TwedMediaInfo...
+Estas páginas son referencias oficiales de MediaArea/MediaInfo y no constituyen una declaración independiente de soporte por parte de TwedMediaInfo.
