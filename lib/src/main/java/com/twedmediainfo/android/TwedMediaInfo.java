@@ -181,6 +181,7 @@ public class TwedMediaInfo implements AutoCloseable {
     public boolean open(String filePath) {
         synchronized (lock) {
             checkAlive();
+            beginOpen();
             return openPathLocked(filePath);
         }
     }
@@ -196,8 +197,8 @@ public class TwedMediaInfo implements AutoCloseable {
     public boolean open(File file) {
         synchronized (lock) {
             checkAlive();
+            beginOpen();
             if (file == null) {
-                beginOpen();
                 return fail(TwedMediaInfoError.INVALID_ARGUMENT, "El archivo es nulo", null);
             }
             return openPathLocked(file.getAbsolutePath());
@@ -267,9 +268,8 @@ public class TwedMediaInfo implements AutoCloseable {
         lastException = null;
     }
 
+    /** Requiere que el llamador ya haya ejecutado {@link #beginOpen()}. */
     private boolean openPathLocked(String filePath) {
-        beginOpen();
-
         if (filePath == null || filePath.isEmpty()) {
             return fail(TwedMediaInfoError.INVALID_ARGUMENT, "La ruta es nula o vacía", null);
         }
@@ -279,13 +279,7 @@ public class TwedMediaInfo implements AutoCloseable {
         try {
             st = Os.stat(filePath);
         } catch (ErrnoException e) {
-            if (e.errno == OsConstants.ENOENT || e.errno == OsConstants.ENOTDIR) {
-                return fail(TwedMediaInfoError.FILE_NOT_FOUND, "El archivo no existe", e);
-            }
-            if (e.errno == OsConstants.EACCES || e.errno == OsConstants.EPERM) {
-                return fail(TwedMediaInfoError.PERMISSION_DENIED, "Sin permiso para leer el archivo", e);
-            }
-            return fail(TwedMediaInfoError.IO_ERROR, "No se pudo consultar el archivo (errno " + e.errno + ")", e);
+            return failFromErrno(e);
         }
 
         if (OsConstants.S_ISDIR(st.st_mode)) {
@@ -293,6 +287,16 @@ public class TwedMediaInfo implements AutoCloseable {
         }
         if (st.st_size == 0) {
             return fail(TwedMediaInfoError.EMPTY_FILE, "El archivo está vacío", null);
+        }
+
+        // stat() no exige permiso de lectura sobre el archivo: sin esta comprobación, un
+        // archivo sin permiso acabaría como NATIVE_ERROR en vez de PERMISSION_DENIED.
+        try {
+            if (!Os.access(filePath, OsConstants.R_OK)) {
+                return fail(TwedMediaInfoError.PERMISSION_DENIED, "Sin permiso para leer el archivo", null);
+            }
+        } catch (ErrnoException e) {
+            return failFromErrno(e);
         }
 
         boolean ok;
@@ -307,6 +311,17 @@ public class TwedMediaInfo implements AutoCloseable {
 
         state = State.OPEN;
         return true;
+    }
+
+    /** Traduce el errno de stat/access al error público correspondiente. */
+    private boolean failFromErrno(ErrnoException e) {
+        if (e.errno == OsConstants.ENOENT || e.errno == OsConstants.ENOTDIR) {
+            return fail(TwedMediaInfoError.FILE_NOT_FOUND, "El archivo no existe", e);
+        }
+        if (e.errno == OsConstants.EACCES || e.errno == OsConstants.EPERM) {
+            return fail(TwedMediaInfoError.PERMISSION_DENIED, "Sin permiso para leer el archivo", e);
+        }
+        return fail(TwedMediaInfoError.IO_ERROR, "No se pudo consultar el archivo (errno " + e.errno + ")", e);
     }
 
     private boolean openUriLocked(Uri uri) {
@@ -432,8 +447,12 @@ public class TwedMediaInfo implements AutoCloseable {
             }
         }
 
-        if (eof && totalRead == 0) {
-            return fail(TwedMediaInfoError.EMPTY_FILE, "El contenido está vacío", null);
+        if (totalRead == 0) {
+            // Ni un solo byte: EOF inmediato = vacío; si no, el proveedor no entregó datos.
+            if (eof) {
+                return fail(TwedMediaInfoError.EMPTY_FILE, "El contenido está vacío", null);
+            }
+            return fail(TwedMediaInfoError.IO_ERROR, "El proveedor no entregó datos", null);
         }
 
         if (!NativeBridge.nativeOpenBufferFinalize(handle)) {
@@ -498,8 +517,15 @@ public class TwedMediaInfo implements AutoCloseable {
      */
     private boolean failUnlessOpen(TwedMediaInfoError error, String message, Throwable cause) {
         if (state == State.OPEN) {
-            Log.w(TAG, "Error al cerrar recursos de E/S tras un análisis exitoso: " + cause);
+            // Solo el nombre de la clase: el mensaje de la excepción puede traer rutas o Uri.
+            Log.w(TAG, "Error al cerrar recursos de E/S tras un análisis exitoso ("
+                    + cause.getClass().getSimpleName() + ")");
             return true;
+        }
+        if (lastError != TwedMediaInfoError.NONE) {
+            // El motivo real ya quedó registrado (por ejemplo EMPTY_FILE); un fallo posterior
+            // al cerrar los recursos no debe pisarlo.
+            return false;
         }
         return fail(error, message, cause);
     }
